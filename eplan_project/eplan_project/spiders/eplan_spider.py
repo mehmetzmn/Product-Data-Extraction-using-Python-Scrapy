@@ -1,4 +1,5 @@
 import scrapy
+import json
 
 
 class EplanSpiderSpider(scrapy.Spider):
@@ -14,20 +15,37 @@ class EplanSpiderSpider(scrapy.Spider):
     ]
 
     def parse(self, response):
-        # Log basic response info
-        self.logger.info("*" * 50)
-        self.logger.info(f"Status code: {response.status}")
-        self.logger.info(f"Response URL: {response.url}")
-        self.logger.info("*" * 50)
+        # Convert response body to a python dictionary
+        json_data = json.loads(response.body)
 
-        # raw HTML file name
-        # file_name = "eplan_raw_response.html"
+        # Get the list of parts from the "data" key
+        parts_list = json_data.get("data", [])
+        self.logger.info(f"Found {len(parts_list)} parts in the list API")
 
-        # Save the response as a JSON file inspect the data structure
-        file_name = "api_response.json"
+        # Loop through the parts
+        for part in parts_list:
+            part_id = part.get("id")
 
-        # save the response body
+            if part_id:
+                # Construct the Detail API URL for each part
+                detail_url = f"https://dataportal.eplan.com/api/parts/{part_id}?context=detail"
+
+                # Send a new request to the Detail API and pass the response to 'parse_detail' method
+                yield scrapy.Request(
+                    url=detail_url,
+                    callback=self.parse_detail
+                )
+
+                # Break after the first time just for testing and inspecting the structure
+                break
+
+    def parse_detail(self, response):
+        # This method handles the response from the Detail API
+        self.logger.info(f"Successfully reached Detail API: {response.url}")
+
+        # Save ONE detail response to inspect its structure
+        file_name = "single_detail_response.json"
         with open(file_name, "wb") as f:
             f.write(response.body)
 
-        self.logger.info(f"Raw HTML successfully saved to: {file_name}")
+        self.logger.info(f"Saved detail data to: {file_name}")
