@@ -43,9 +43,63 @@ class EplanSpiderSpider(scrapy.Spider):
         # This method handles the response from the Detail API
         self.logger.info(f"Successfully reached Detail API: {response.url}")
 
-        # Save ONE detail response to inspect its structure
-        file_name = "single_detail_response.json"
-        with open(file_name, "wb") as f:
-            f.write(response.body)
+        # TODO:
+        # 1. Extract the JSON
+        json_data = json.loads(response.body)
 
-        self.logger.info(f"Saved detail data to: {file_name}")
+        # 2. Extract data from path inside the JSON
+
+        # data block
+        data_block = json_data.get("data", {})
+        # attributes block
+        attributes_block = data_block.get("attributes", {})
+        # relationships block
+        relationships_block = data_block.get("relationships", {})
+
+        part_number = attributes_block.get("part_number", {})
+        designation = attributes_block.get("designation", {}).get("en_US", {})
+        description = attributes_block.get("description", {}).get("en_US", {})
+
+        manufacturer_id = relationships_block.get(
+            "manufacturer", {}).get("data",  {}).get("id", {})
+        top_product_group_id = relationships_block.get(
+            "product_top_group", {}).get("data", {}).get("id", {})
+        mid_product_group_id = relationships_block.get(
+            "product_group", {}).get("data", {}).get("id", {})
+        sub_product_group_id = relationships_block.get(
+            "product_sub_group", {}).get("data", {}).get("id", {})
+
+        included_list = json_data.get("included", [])
+        id_to_name_map = {}
+
+        for item in included_list:
+            item_id = item.get("id")
+            item_type = item.get("type", "")
+            item_attrs = item.get("attributes", {})
+
+            if item_type == "manufacturers":
+                id_to_name_map[item_id] = item_attrs.get(
+                    "long_name") or item_attrs.get("short_name")
+            elif item_type == "eplan_catalog_entries":
+                id_to_name_map[item_id] = item_attrs.get(
+                    "name", {})
+
+        manufacturer_name = id_to_name_map.get(
+            manufacturer_id, manufacturer_id)
+
+        top_product_name = id_to_name_map.get(
+            top_product_group_id, top_product_group_id)
+        mid_product_name = id_to_name_map.get(
+            mid_product_group_id, mid_product_group_id)
+        sub_product_name = id_to_name_map.get(
+            sub_product_group_id, sub_product_group_id)
+
+        product_group = f"{top_product_name} - {mid_product_name} - {sub_product_name}"
+
+        yield {
+            "Part Number": part_number,
+            "Manufacturer": manufacturer_name,
+            "Designation": designation,
+            "Description": description,
+            "Product Group": product_group
+        }
