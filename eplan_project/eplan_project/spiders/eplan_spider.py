@@ -10,8 +10,13 @@ class EplanSpiderSpider(scrapy.Spider):
     # start_urls = ["https://dataportal.eplan.com/parts/list?page=1&perpage=200"]
 
     #  GET API
+    # start_urls = [
+    #    "https://dataportal.eplan.com/api/parts?page%5Boffset%5D=0&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list"
+    # ]
+
     start_urls = [
-        "https://dataportal.eplan.com/api/parts?page%5Boffset%5D=0&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list"
+        f"https://dataportal.eplan.com/api/parts?page%5Boffset%5D={offset_value}&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list"
+        for offset_value in range(0, 1000, 200)
     ]
 
     def parse(self, response):
@@ -37,7 +42,7 @@ class EplanSpiderSpider(scrapy.Spider):
                 )
 
                 # Break after the first time just for testing and inspecting the structure
-                break
+                # break
 
     def parse_detail(self, response):
         # This method handles the response from the Detail API
@@ -57,8 +62,19 @@ class EplanSpiderSpider(scrapy.Spider):
         relationships_block = data_block.get("relationships", {})
 
         part_number = attributes_block.get("part_number", {})
-        designation = attributes_block.get("designation", {}).get("en_US", {})
-        description = attributes_block.get("description", {}).get("en_US", {})
+
+        def extract_en_us(data_field):
+            raw_text = ""
+            if isinstance(data_field, dict):
+                raw_text = data_field.get("en_US", "")
+            elif isinstance(data_field, list) and len(data_field) > 0:
+                first_item = data_field[0]
+                if isinstance(first_item, dict):
+                    raw_text = first_item.get("en_US", "")
+            return raw_text.replace("\n", " ").replace("\r", "").strip() if raw_text else ""
+
+        designation = extract_en_us(attributes_block.get("designation"))
+        description = extract_en_us(attributes_block.get("description"))
 
         manufacturer_id = relationships_block.get(
             "manufacturer", {}).get("data",  {}).get("id", {})
