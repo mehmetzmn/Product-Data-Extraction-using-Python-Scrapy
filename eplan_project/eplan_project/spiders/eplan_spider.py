@@ -14,10 +14,21 @@ class EplanSpiderSpider(scrapy.Spider):
     #    "https://dataportal.eplan.com/api/parts?page%5Boffset%5D=0&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list"
     # ]
 
-    start_urls = [
-        f"https://dataportal.eplan.com/api/parts?page%5Boffset%5D={offset_value}&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list"
-        for offset_value in range(0, 1000, 200)
-    ]
+    # start_urls = [
+    #    f"https://dataportal.eplan.com/api/parts?page%5Boffset%5D={offset_value}&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list"
+    #    for offset_value in range(0, 1000, 200)
+    # ]
+
+    # def start_requests(self) not working, scrapy 2.17.0 async def start(self) is new API call
+    async def start(self):
+        raw_max = getattr(self, 'max_items', 1000)
+
+        limit_value = int(raw_max)
+        self.logger.info("*" * 50)
+        self.logger.info(f"Here is the limit value {limit_value}")
+
+        for offset_value in range(0, limit_value, 200):
+            yield scrapy.Request(url=f"https://dataportal.eplan.com/api/parts?page%5Boffset%5D={offset_value}&page%5Blimit%5D=200&sort=-download_count&fuzziness=1&context=list", callback=self.parse, dont_filter=True)
 
     def parse(self, response):
         # Convert response body to a python dictionary
