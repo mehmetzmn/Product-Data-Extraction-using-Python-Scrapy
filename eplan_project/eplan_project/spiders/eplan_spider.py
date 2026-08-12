@@ -1,5 +1,6 @@
 import scrapy
 import json
+from eplan_project.items import EplanProductItem
 
 
 class EplanSpiderSpider(scrapy.Spider):
@@ -123,10 +124,12 @@ class EplanSpiderSpider(scrapy.Spider):
 
         product_group = f"{top_product_name} - {mid_product_name} - {sub_product_name}"
 
-        yield {
-            "Part Number": part_number,
-            "Manufacturer": manufacturer_name,
-            "Designation": designation,
-            "Description": description,
-            "Product Group": product_group
-        }
+        item = EplanProductItem()
+
+        item["part_number"] = part_number
+        item["manufacturer"] = manufacturer_name
+        item["designation"] = designation
+        item["description"] = description
+        item["product_group"] = product_group
+
+        yield item
