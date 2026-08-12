@@ -7,7 +7,7 @@ A robust and scalable web scraper built with Python and Scrapy to extract detail
 - **Asynchronous Scraping:** Highly optimized for speed. Reduces extraction time significantly by utilizing Scrapy's async architecture.
 - **Dynamic Item Limits:** Can be scaled from the command line without modifying the codebase (e.g., extracting 500 or 5000 items dynamically).
 - **Data Sanitization:** Implements custom utility functions to handle API data inconsistencies (handling both `dict` and `list` responses safely) and strips newline characters (`\n`, `\r`) for clean, single-line CSV formatting.
-- **Robust Architecture:** Follows Scrapy's best practices using `Items` for rigid data schemas and `utils.py` for modular helper functions.
+- **Robust Architecture:** Follows Scrapy's best practices using `Items` for rigid data schemas.
 
 ## Prerequisites
 
