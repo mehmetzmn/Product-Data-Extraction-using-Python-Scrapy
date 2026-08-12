@@ -22,3 +22,5 @@ You can run the spider and output the results directly to a CSV file. Use the `-
 ```bash
 uv run scrapy crawl eplan_spider -a max_items=1000 -O extracted_parts.csv
 ```
+
+This project is developed for **educational and portfolio purposes only**. The script interacts with public API endpoints. The author does not take any responsibility for how this code is used. Users are solely responsible for ensuring that their use of this script complies with the target website's Terms of Service and local data scraping laws. Do not use this script to overload servers or for commercial data extraction without permission.
